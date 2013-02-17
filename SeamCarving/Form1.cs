@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SeamCarving
 {
+    public delegate void Update(int val);
+
     public partial class Form1 : Form
     {
         private CAIR cair;
@@ -58,7 +54,7 @@ namespace SeamCarving
             energyImageToolStripMenuItem.Checked = true;
             accEnergyImageToolStripMenuItem.Checked = false;
 
-            splitContainer1.Panel2.BackgroundImage = cair.CalculateEnergy(cair.GetOriginalImage());
+            splitContainer1.Panel2.BackgroundImage = cair.GetEnergyImage();
         }
 
         private void accEnergyImageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -67,13 +63,13 @@ namespace SeamCarving
             energyImageToolStripMenuItem.Checked = false;
             accEnergyImageToolStripMenuItem.Checked = true;
 
-            splitContainer1.Panel2.BackgroundImage = cair.CalculateAccumulatedEnergy(cair.GetOriginalImage());
+            splitContainer1.Panel2.BackgroundImage = cair.GetAccEnergyImage();
         }
 
         private void btnResize_Click(object sender, EventArgs e)
         {
-            splitContainer1.Panel2.BackgroundImage = cair.Resize(cair.GetOriginalImage(), (int)nudNewWidth.Value);
-            
+            cair.Resize((val) => toolStripProgressBar1.Value = val, (int)nudNewWidth.Value);
+            splitContainer1.Panel2.BackgroundImage = cair.GetOriginalImage();
         }
     }
 }

@@ -1,28 +1,207 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SeamCarving
 {
     class CAIR
     {
-        private Bitmap original, energy;
-        public int width { get; private set; }
-        public int height { get; private set; }
+        public int width { get; private set; }  // width of the original image
+        public int height { get; private set; } // height of the original image
+        private int adjWidth;  // width after adding or removing seams
+        private int adjHeight; // height after adding or removing seams
 
-        public CAIR(Bitmap original)
+        private Bitmap coloredOriginal; // original image (not in grayscale)
+        private int[,] original, energy, accEnergy; // internal representations of images
+
+        public CAIR(Bitmap input)
         {
-            this.original = original;
-            width = original.Width;
-            height = original.Height;
+            this.coloredOriginal = input;
+            width = adjWidth = input.Width;
+            height = adjHeight = input.Height;
+
+            // allocate and fill images
+            original = new int[height * 2, width * 2];
+            energy = new int[height * 2, width * 2];
+            accEnergy = new int[height * 2, width * 2];
+            ConvertToGrayscale(input, original);
+            CalculateEnergy(original, energy);
+            CalculateAccumulatedEnergy(energy, accEnergy);
+        }
+
+        private Bitmap ConvertToBitmap(int[,] arr, int w, int h)
+        {
+            Bitmap ret = new Bitmap(w, h);
+            LockBitmap lockedRet = new LockBitmap(ret);
+            lockedRet.LockBits();
+
+            // find max to scale the pixels in the [0..255] range
+            double max = 0;
+            for (int r = 1; r < h - 1; ++r)
+                for (int c = 1; c < w - 1; ++c)
+                    if (arr[r, c] > max)
+                        max = arr[r, c];
+
+            // fill result bitmap
+            for (int r = 1; r < h - 1; ++r)
+            {
+                for (int c = 1; c < w - 1; ++c)
+                {
+                    byte col = Convert.ToByte(arr[r, c] / max * 255);
+                    lockedRet.SetPixel(c, r, Color.FromArgb(col, col, col));
+                }
+            }
+
+            lockedRet.UnlockBits();
+            return ret;
+        }
+
+        private void ConvertToArray(Bitmap b, int[,] ret)
+        {
+            LockBitmap lockedB = new LockBitmap(b);
+            lockedB.LockBits();
+
+            // fill result array
+            for (int r = 0; r < b.Height; ++r)
+                for (int c = 0; c < b.Width; ++c)
+                    ret[r, c] = lockedB.GetPixel(c, r).R;
+
+            lockedB.UnlockBits();
+        }
+
+        private void ConvertToGrayscale(Bitmap input, int[,] ret)
+        {
+            LockBitmap img = new LockBitmap(input);
+            adjHeight = input.Height;
+            adjWidth = input.Width;
+
+            img.LockBits();
+
+            // convert to grayscale
+            for (int j = 0; j < adjHeight; j++)
+            {
+                for (int i = 0; i < adjWidth; i++)
+                {
+                    Color c = img.GetPixel(i, j);
+                    double gray = (double)c.R * 0.3 + (double)c.G * 0.59 + (double)c.B * 0.11;
+                    ret[j, i] = (int)gray;
+                }
+            }
+
+            img.UnlockBits();
+        }
+
+        private void CalculateEnergy(int[,] input, int[,] ret)
+        {
+            // border of the image
+            for (int i = 0; i < adjWidth; ++i) // first and last row
+                ret[0, i] = ret[adjHeight - 1, i] = int.MaxValue;
+            for (int i = 0; i < adjHeight; ++i) // first and last collumn
+                ret[i, 0] = ret[i, adjWidth - 1] = int.MaxValue;
+
+            // other pixels with gradient (sum of sobel derivative in x and y directions)
+            for (int i = 1; i < adjHeight - 1; i++)
+            {
+                for (int j = 1; j < adjWidth - 1; j++)
+                {
+                    int gray = Math.Abs((original[i + 1, j - 1] + 2 * original[i + 1, j] + original[i + 1, j + 1]) - (original[i - 1, j - 1] + 2 * original[i - 1, j] + original[i - 1, j + 1])) / 4 +
+                               Math.Abs((original[i - 1, j + 1] + 2 * original[i, j + 1] + original[i + 1, j + 1]) - (original[i - 1, j - 1] + 2 * original[i, j - 1] + original[i + 1, j - 1])) / 4;
+                    gray = Math.Min(gray, 255);
+                    ret[i, j] = gray;
+                }
+            }
+        }
+
+        private void CalculateAccumulatedEnergy(int[,] input, int[,] ret)
+        {
+            // copy initial values (the energy image)
+            for (int r = 0; r < adjHeight; ++r)
+                for (int c = 0; c < adjWidth; ++c)
+                    ret[r, c] = input[r, c];
+
+            for (int r = 2; r < adjHeight - 1; ++r)
+            {
+                for (int c = 1; c < adjWidth - 1; ++c)
+                {
+                    // find min of 3
+                    int best = ret[r - 1, c];
+                    if (ret[r - 1, c - 1] < best)
+                        best = ret[r - 1, c - 1];
+                    if (ret[r - 1, c + 1] < best)
+                        best = ret[r - 1, c + 1];
+
+                    // accumulate the minimum
+                    ret[r, c] += best;
+                }
+            }
+        }
+
+        private Seam FindBestSeam(int[,] input)
+        {
+            Seam s = new Seam();
+
+            // find start column with the least accumulated energy
+            int lowestEnergy = int.MaxValue;
+            int bestColumn = 0;
+            for (int c = 1; c < adjWidth - 1; ++c)
+            {
+                if (accEnergy[adjHeight - 2, c] < lowestEnergy)
+                {
+                    lowestEnergy = accEnergy[adjHeight - 2, c];
+                    bestColumn = c;
+                }
+            }
+            s.columns.Add(bestColumn);
+
+            // construct path to first row
+            for (int r = adjHeight - 2; r > 1; --r)
+            {
+                int c1 = accEnergy[r - 1, bestColumn - 1];
+                int c2 = accEnergy[r - 1, bestColumn];
+                int c3 = accEnergy[r - 1, bestColumn + 1];
+
+                // select min energy
+                int min = c2;
+                if (c1 < min) min = c1;
+                if (c3 < min) min = c3;
+
+                // adjust column
+                if (min == c1) bestColumn--;
+                else if (min == c3) bestColumn++;
+
+                s.columns.Add(bestColumn);
+            }
+
+            return s;
+        }
+
+        private void RemoveOneSeam(int[,] input, Seam s)
+        {
+            // reverse because we want to start at the first row
+            s.columns.Reverse();
+
+            for (int r = 1; r < adjHeight - 1; ++r)
+                for (int c = s.columns[r-1] + 1; c < adjWidth - 1; ++c)
+                    input[r, c - 1] = input[r, c]; // skip pixel if we passed the deleted column
+        }
+
+        private void AddOneSeam(int[,] input, Seam s)
+        {
+            // not implemented
         }
 
         public Bitmap GetOriginalImage()
         {
-            return original;
+            return ConvertToBitmap(original, adjWidth, adjHeight);
+        }
+
+        public Bitmap GetEnergyImage()
+        {
+            return ConvertToBitmap(energy, adjWidth, adjHeight);
+        }
+
+        public Bitmap GetAccEnergyImage()
+        {
+            return ConvertToBitmap(accEnergy, adjWidth, adjHeight);
         }
 
         public string GetFormattedSize()
@@ -30,207 +209,34 @@ namespace SeamCarving
             return width.ToString() + "x" + height.ToString();
         }
 
-        public Bitmap CalculateEnergy(Bitmap input)
+        public void Resize(Update callback, int newWidth)
         {
-            LockBitmap img = new LockBitmap(input);
-            energy = new Bitmap(input.Width, input.Height);
-            LockBitmap lockedEnergy = new LockBitmap(energy);
+            int currWidth = adjWidth;
+            int diff = currWidth - newWidth;
+            double step = 100.0 / Math.Abs(diff);
 
-            img.LockBits();
-            lockedEnergy.LockBits();
-
-            // calculate grayscale image
-            for (int j = 0; j < input.Height; j++)
+            ConvertToGrayscale(coloredOriginal, original);      // 1) convert to grayscale
+            for (int i = 0; i < Math.Abs(diff); ++i)
             {
-                for (int i = 0; i < input.Width; i++)
+                CalculateEnergy(original, energy);              // 2) find energy in image
+                CalculateAccumulatedEnergy(energy, accEnergy);  // 3) accumulate energy
+                Seam bestSeam = FindBestSeam(accEnergy);
+
+                if (diff > 0)
                 {
-                    Color c = img.GetPixel(i, j);
-                    int gray = ((int)c.R + (int)c.G + (int)c.B) / 3;
-                    lockedEnergy.SetPixel(i, j, Color.FromArgb(255, gray, gray, gray));
+                    RemoveOneSeam(original, bestSeam);          // 4a) remove seam if new width is less than original
+                    adjWidth--;
                 }
-            }
-
-            // calculate gradient (energy)
-            for (int j = 1; j < input.Height - 1; j++)
-            {
-                for (int i = 1; i < input.Width - 1; i++)
+                else                                            // 4b) add seam if new width is bigger than original
                 {
-                    int gray = Math.Abs((img.GetPixel(i + 1, j - 1).R + 2 * img.GetPixel(i + 1, j).R + img.GetPixel(i + 1, j + 1).R) - (img.GetPixel(i - 1, j - 1).R + 2 * img.GetPixel(i - 1, j).R + img.GetPixel(i - 1, j + 1).R)) / 4 + 
-                        Math.Abs((img.GetPixel(i - 1, j + 1).R + 2 * img.GetPixel(i, j + 1).R + img.GetPixel(i + 1, j + 1).R) - (img.GetPixel(i - 1, j - 1).R + 2 * img.GetPixel(i, j - 1).R + img.GetPixel(i + 1, j - 1).R)) / 4;
-                    gray = Math.Min(gray, 255);
-                    lockedEnergy.SetPixel(i, j, Color.FromArgb(255, gray, gray, gray));
+                    AddOneSeam(original, bestSeam);
+                    adjWidth++;
                 }
+
+                callback((int)(i * step)); // update progressbar
             }
 
-            lockedEnergy.UnlockBits();
-            img.UnlockBits();
-
-            return energy;
-        }
-
-        public Bitmap CalculateAccumulatedEnergy(Bitmap input)
-        {
-            return ConvertToBitmap(CalculateAccumulatedEnergyHelper(input));
-        }
-
-        public Bitmap Resize(Bitmap input, int val)
-        {
-            int number = width - val;
-
-            while (number != 0)
-            {
-                if (number < 0)
-                    input = AddOneSeam(input);
-                else
-                    input = RemoveOneSeam(input);
-                --number;
-            }
-
-            return input;
-        }
-
-        private Bitmap RemoveOneSeam(Bitmap input)
-        {
-            int[,] newImage = new int[input.Height, input.Width - 1];
-            LockBitmap lockedInput = new LockBitmap(input);
-
-            // wat herschikken
-            Seam s = FindBestSeam(input);
-            List<int> columns = new List<int>();
-            columns.Add(s.startColumn);
-            columns.AddRange(s.others);
-            columns.Reverse();
-
-            lockedInput.LockBits();
-
-            for (int r = 0; r < input.Height; ++r)
-            {
-                for (int c = 0; c < input.Width; ++c)
-                {
-                    if (c == columns[r]) // te verwijderen klolom overslaan
-                        continue;
-                    else if (c < columns[r])
-                        newImage[r, c] = lockedInput.GetPixel(c, r).R;
-                    else
-                        newImage[r, c - 1] = lockedInput.GetPixel(c, r).R;
-                }
-            }
-
-            lockedInput.UnlockBits();
-
-            return ConvertToBitmap(newImage);
-        }
-
-        private Bitmap AddOneSeam(Bitmap input)
-        {
-            return null;
-        }
-
-        private Seam FindBestSeam(Bitmap input)
-        {
-            energy = null; // make sure it's recalculated
-            int[,] acc = CalculateAccumulatedEnergyHelper(input);
-            Seam s = new Seam();
-
-            // start kolom vinden
-            int lowestEnergy = int.MaxValue;
-            for (int c = 0; c < input.Width; ++c)
-            {
-                if (acc[input.Height - 1, c] < lowestEnergy)
-                {
-                    lowestEnergy = acc[input.Height - 1, c];
-                    s.startColumn = c;
-                }
-            }
-
-            // pad naar boven vinden
-            int currColumn = s.startColumn;
-            for (int r = input.Height - 1; r > 0; --r)
-            {
-                int c1 = int.MaxValue, c2 = acc[r - 1, currColumn], c3 = int.MaxValue;
-                if (currColumn > 0)
-                    c1 = acc[r - 1, currColumn - 1];
-                if (currColumn < input.Width - 1)
-                    c2 = acc[r - 1, currColumn + 1];
-
-                int min = c2;
-                if (c1 < min)
-                    min = c1;
-                if (c3 < min)
-                    min = c3;
-
-                if (min == c1)
-                    currColumn--;
-                else if (min == c3)
-                    currColumn++;
-
-                s.others.Add(currColumn);
-            }
-
-            return s;
-        }
-
-        private int[,] CalculateAccumulatedEnergyHelper(Bitmap input)
-        {
-            if (energy == null)
-                CalculateEnergy(input);
-
-            LockBitmap lockedEnergy = new LockBitmap(energy);
-            lockedEnergy.LockBits();
-
-            int[,] acc = new int[input.Height, input.Width];
-
-            // initiele waarden kopieren
-            for (int r = 0; r < input.Height; ++r)
-                for (int c = 0; c < input.Width; ++c)
-                    acc[r, c] = lockedEnergy.GetPixel(c, r).R;
-            lockedEnergy.UnlockBits();
-
-            for (int r = 1; r < input.Height; ++r)
-            {
-                for (int c = 0; c < input.Width; ++c)
-                {
-                    // min waarde van de vorige 3 vinden
-                    int best = int.MaxValue;
-                    for (int i = -1; i <= 1; ++i)
-                    {
-                        if (c + i < 0 || c + i >= input.Width)
-                            continue;
-                        if (acc[r - 1, c + i] < best)
-                            best = acc[r - 1, c + i];
-                    }
-
-                    // bij het huidige tellen
-                    acc[r, c] += best;
-                }
-            }
-
-            return acc;
-        }
-
-        private Bitmap ConvertToBitmap(int[,] acc)
-        {
-            Bitmap heatmap = new Bitmap(acc.GetLength(1), acc.GetLength(0));
-            LockBitmap lockedHeatmap = new LockBitmap(heatmap);
-            lockedHeatmap.LockBits();
-
-            IEnumerable<int> flat = acc.Cast<int>();
-            int min = flat.Min();
-            int max = flat.Max();
-
-            for (int r = 0; r < acc.GetLength(0); ++r)
-            {
-                for (int c = 0; c < acc.GetLength(1); ++c)
-                {
-                    double val = (double)(acc[r, c] - min) / (max - min);
-                    byte component = Convert.ToByte(val * 255);
-                    lockedHeatmap.SetPixel(c, r, Color.FromArgb(component, component, component));
-                }
-            }
-
-            lockedHeatmap.UnlockBits();
-
-            return heatmap;
+            // TODO: remove columns in colored image (operations are done on a grayscale version now)
         }
     }
 }
