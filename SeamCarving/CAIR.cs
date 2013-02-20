@@ -129,6 +129,9 @@ namespace SeamCarving
                     int cr = withForwardEnergy ? Math.Abs(input[r, c + 1] - input[r, c - 1]) + 
                                                  Math.Abs(input[r - 1, c] - input[r, c + 1]) : 0;
 
+                    if (c == 1 || c == adjWidth - 2) 
+                        cl = cu = cr = 0;
+
                     // find min of 3
                     int best = ret[r - 1, c] + cu;
                     if (ret[r - 1, c - 1] + cl < best)
