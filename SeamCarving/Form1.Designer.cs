@@ -42,23 +42,30 @@
             this.accEnergyImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.cbForwardEnergy = new System.Windows.Forms.CheckBox();
+            this.nudNewHeight = new System.Windows.Forms.NumericUpDown();
+            this.label3 = new System.Windows.Forms.Label();
             this.nudNewWidth = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
             this.btnResize = new System.Windows.Forms.Button();
             this.lblSize = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnClear = new System.Windows.Forms.Button();
             this.nudWeight = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.rbSubtractWeight = new System.Windows.Forms.RadioButton();
             this.rbAddWeight = new System.Windows.Forms.RadioButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
+            this.seamsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudNewHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNewWidth)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudWeight)).BeginInit();
@@ -97,37 +104,39 @@
             this.openToolStripMenuItem1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
             this.openToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem1.Size = new System.Drawing.Size(150, 22);
+            this.openToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
             this.openToolStripMenuItem1.Text = "&Open";
             this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
             // 
             // saveToolStripMenuItem1
             // 
-            this.saveToolStripMenuItem1.Enabled = false;
             this.saveToolStripMenuItem1.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripMenuItem1.Image")));
             this.saveToolStripMenuItem1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
             this.saveToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem1.Size = new System.Drawing.Size(150, 22);
+            this.saveToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
             this.saveToolStripMenuItem1.Text = "&Save as";
+            this.saveToolStripMenuItem1.Click += new System.EventHandler(this.saveToolStripMenuItem1_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(147, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(149, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // showToolStripMenuItem
             // 
             this.showToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.originalImageToolStripMenuItem,
             this.energyImageToolStripMenuItem,
-            this.accEnergyImageToolStripMenuItem});
+            this.accEnergyImageToolStripMenuItem,
+            this.seamsToolStripMenuItem});
             this.showToolStripMenuItem.Enabled = false;
             this.showToolStripMenuItem.Name = "showToolStripMenuItem";
             this.showToolStripMenuItem.Size = new System.Drawing.Size(45, 20);
@@ -180,17 +189,57 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.cbForwardEnergy);
+            this.groupBox2.Controls.Add(this.nudNewHeight);
+            this.groupBox2.Controls.Add(this.label3);
             this.groupBox2.Controls.Add(this.nudNewWidth);
             this.groupBox2.Controls.Add(this.label4);
             this.groupBox2.Controls.Add(this.btnResize);
             this.groupBox2.Controls.Add(this.lblSize);
             this.groupBox2.Controls.Add(this.label2);
-            this.groupBox2.Location = new System.Drawing.Point(3, 115);
+            this.groupBox2.Location = new System.Drawing.Point(3, 138);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(186, 105);
+            this.groupBox2.Size = new System.Drawing.Size(186, 147);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Adjust size";
+            // 
+            // cbForwardEnergy
+            // 
+            this.cbForwardEnergy.AutoSize = true;
+            this.cbForwardEnergy.Location = new System.Drawing.Point(9, 93);
+            this.cbForwardEnergy.Name = "cbForwardEnergy";
+            this.cbForwardEnergy.Size = new System.Drawing.Size(99, 17);
+            this.cbForwardEnergy.TabIndex = 7;
+            this.cbForwardEnergy.Text = "Forward energy";
+            this.cbForwardEnergy.UseVisualStyleBackColor = true;
+            // 
+            // nudNewHeight
+            // 
+            this.nudNewHeight.Enabled = false;
+            this.nudNewHeight.Increment = new decimal(new int[] {
+            50,
+            0,
+            0,
+            0});
+            this.nudNewHeight.Location = new System.Drawing.Point(78, 67);
+            this.nudNewHeight.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.nudNewHeight.Name = "nudNewHeight";
+            this.nudNewHeight.Size = new System.Drawing.Size(102, 20);
+            this.nudNewHeight.TabIndex = 6;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 74);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(64, 13);
+            this.label3.TabIndex = 5;
+            this.label3.Text = "New height:";
             // 
             // nudNewWidth
             // 
@@ -199,7 +248,7 @@
             0,
             0,
             0});
-            this.nudNewWidth.Location = new System.Drawing.Point(78, 45);
+            this.nudNewWidth.Location = new System.Drawing.Point(78, 41);
             this.nudNewWidth.Maximum = new decimal(new int[] {
             10000,
             0,
@@ -212,7 +261,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(9, 47);
+            this.label4.Location = new System.Drawing.Point(6, 48);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(60, 13);
             this.label4.TabIndex = 3;
@@ -221,7 +270,7 @@
             // btnResize
             // 
             this.btnResize.Enabled = false;
-            this.btnResize.Location = new System.Drawing.Point(105, 71);
+            this.btnResize.Location = new System.Drawing.Point(105, 116);
             this.btnResize.Name = "btnResize";
             this.btnResize.Size = new System.Drawing.Size(75, 23);
             this.btnResize.TabIndex = 2;
@@ -232,7 +281,7 @@
             // lblSize
             // 
             this.lblSize.AutoSize = true;
-            this.lblSize.Location = new System.Drawing.Point(81, 25);
+            this.lblSize.Location = new System.Drawing.Point(75, 25);
             this.lblSize.Name = "lblSize";
             this.lblSize.Size = new System.Drawing.Size(27, 13);
             this.lblSize.TabIndex = 1;
@@ -241,7 +290,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(9, 25);
+            this.label2.Location = new System.Drawing.Point(6, 25);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(66, 13);
             this.label2.TabIndex = 0;
@@ -249,16 +298,27 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.btnClear);
             this.groupBox1.Controls.Add(this.nudWeight);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.rbSubtractWeight);
             this.groupBox1.Controls.Add(this.rbAddWeight);
+            this.groupBox1.Enabled = false;
             this.groupBox1.Location = new System.Drawing.Point(3, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(186, 106);
+            this.groupBox1.Size = new System.Drawing.Size(186, 129);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Modify energy image";
+            // 
+            // btnClear
+            // 
+            this.btnClear.Location = new System.Drawing.Point(105, 99);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(75, 23);
+            this.btnClear.TabIndex = 4;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
             // 
             // nudWeight
             // 
@@ -285,7 +345,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 29);
+            this.label1.Location = new System.Drawing.Point(6, 29);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(44, 13);
             this.label1.TabIndex = 2;
@@ -298,13 +358,13 @@
             this.rbSubtractWeight.Name = "rbSubtractWeight";
             this.rbSubtractWeight.Size = new System.Drawing.Size(122, 17);
             this.rbSubtractWeight.TabIndex = 1;
-            this.rbSubtractWeight.TabStop = true;
             this.rbSubtractWeight.Text = "Add negative weight";
             this.rbSubtractWeight.UseVisualStyleBackColor = true;
             // 
             // rbAddWeight
             // 
             this.rbAddWeight.AutoSize = true;
+            this.rbAddWeight.Checked = true;
             this.rbAddWeight.Location = new System.Drawing.Point(9, 53);
             this.rbAddWeight.Name = "rbAddWeight";
             this.rbAddWeight.Size = new System.Drawing.Size(117, 17);
@@ -326,7 +386,14 @@
             // toolStripProgressBar1
             // 
             this.toolStripProgressBar1.Name = "toolStripProgressBar1";
-            this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(200, 16);
+            // 
+            // seamsToolStripMenuItem
+            // 
+            this.seamsToolStripMenuItem.Name = "seamsToolStripMenuItem";
+            this.seamsToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
+            this.seamsToolStripMenuItem.Text = "Seams";
+            this.seamsToolStripMenuItem.Click += new System.EventHandler(this.seamsToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -346,6 +413,7 @@
             this.splitContainer1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudNewHeight)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudNewWidth)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -384,6 +452,12 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.CheckBox cbForwardEnergy;
+        private System.Windows.Forms.NumericUpDown nudNewHeight;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ToolStripMenuItem seamsToolStripMenuItem;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
     }
 }
 
