@@ -11,13 +11,15 @@
     <title>Seam carving</title>
   </head>
   
-  <script>
-	$('#gui-image').hover(function() {
-	  $(this).attr('src', 'images/output/gui-alt.png');
-	}, function() {
-	  $(this).attr('src', 'images/output/gui.png');
+	$(document).ready(function() {
+		$( "#name img" ).mouseover(function(){
+			$(this).attr("src", "images/output/gui-alt.png");
+		});
+
+		$( "#name img" ).mouseout(function(){
+			$(this).attr("src", "images/output/gui.png");
+		});
 	});
-  </script>
 
   <body>
 
@@ -41,7 +43,9 @@
       <section id="main_content" class="inner">
 	  
 <h3>User interface</h3>
-<img id="gui-image" src="images/output/gui.png" alt="user interface">
+<a href="#" id="name">
+	<img title="gui-image" src="images/output/gui.png" alt="user interface">
+</a>
 
 <h3>Features</h3>
 <p>
